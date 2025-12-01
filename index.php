@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +7,17 @@
     <title>Accueil</title>
 </head>
 <body>
+    <?php
+session_start();
+
+if (isset($_SESSION['username'])) {
+    echo "<h1>Bienvenue ".htmlspecialchars($_SESSION['username'])."</h1>";
+    echo '<a href="form_incription_connect.php?logout=1">Déconnexion</a>';
+    exit;
+}
+?>
+
+    
     <h1>Incription</h1>
     <form action="form_incription_connect.php" method="POST">
 
@@ -32,9 +44,14 @@
             <label for="">Password</label>
             <input type="password" name="password">
         </div>
- 
+        <label>
+            <input type="checkbox" name="remember"> Se souvenir de moi
+        </label>
+        
+        
         <input type="submit" value="Valider" name="connect">
     </form>
+    
     
 </body>
 </html>
