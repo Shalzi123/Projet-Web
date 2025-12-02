@@ -69,9 +69,12 @@ if (isset($_POST['connect'])) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
 
-        if($role = 'admin'){
+        if ($user  ['role'] === 'admin') {
             header("Location: adminpage.php");
-        }
+            exit;} else {
+                echo "Accès refusé";
+            }
+
 
         if (!empty($_POST['remember'])) {
 
