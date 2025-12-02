@@ -72,8 +72,9 @@ if (isset($_POST['connect'])) {
         if ($user  ['role'] === 'admin') {
             header("Location: adminpage.php");
             exit;} else {
-                echo "Accès refusé";
-            }
+                header("Location: test.php");
+                exit;}
+
 
 
         if (!empty($_POST['remember'])) {
@@ -95,8 +96,6 @@ if (isset($_POST['connect'])) {
                 false,
                 true
             );
-            
-            header("Location: test.php");
         }
     } else {
         echo "Identifiants incorrects";
