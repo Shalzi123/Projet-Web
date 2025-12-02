@@ -7,9 +7,42 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main class="quiz-app">
+    <!-- Écran de connexion -->
+    <div id="login-screen" class="login-container">
+        <div class="login-card">
+            <h1>QCM — Connexion</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rôle:</label>
+                    <select id="role" name="role">
+                        <option value="student">Élève</option>
+                        <option value="teacher">Professeur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn primary">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application QCM -->
+    <main class="quiz-app" id="quiz-app" hidden>
         <header>
-            <h1>QCM — Exemple</h1>
+            <div class="header-top">
+                <h1>QCM — Exemple</h1>
+                <div class="user-info">
+                    <span id="user-display"></span>
+                    <button id="logout-btn" class="btn-small">Déconnexion</button>
+                </div>
+            </div>
             <p class="subtitle">Questions à choix simple ou multiple. Sélectionnez vos réponses puis cliquez sur <strong>Vérifier</strong>.</p>
         </header>
 
