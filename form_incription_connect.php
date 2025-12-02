@@ -40,10 +40,12 @@ if (isset($_POST['register'])) {
 
         $hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-        $sth = $dbh->prepare("INSERT INTO sql_utilisateur (username, password) VALUES (:username, :password)");
+        $sth = $dbh->prepare("INSERT INTO sql_utilisateur (username, password, role) VALUES (:username, :password, :role)");
         $sth->execute([
             'username' => $_POST['username'],
             'password' => $hash,
+            'role' => $_POST['role']
+
         ]);
 
         echo "<b>Inscription Valider</b>";
@@ -59,6 +61,7 @@ if (isset($_POST['connect'])) {
     if ($user && password_verify($_POST['password'], $user['password'])) {
 
         $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
 
         if (!empty($_POST['remember'])) {
 
