@@ -69,7 +69,7 @@ if (isset($_POST['connect'])) {
                 'token' => password_hash($token, PASSWORD_DEFAULT),
                 'username' => $user['username']
             ]);
-
+            
             setcookie(
                 "remember_token",
                 $token,
@@ -79,11 +79,9 @@ if (isset($_POST['connect'])) {
                 false,
                 true
             );
+            
+            header("Location: test.php");
         }
-
-        header("Location: test.php");
-        exit;
-
     } else {
         echo "Identifiants incorrects";
     }
@@ -101,7 +99,9 @@ if (isset($_GET['logout'])) {
         session_destroy();
     }
 
-    echo "Déconnecté";
+    header("Location: index.php?success=logout");
+    exit;
+
 }
 
 

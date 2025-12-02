@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>test</title>
 </head>
 <body>
     <h1>Hello word</h1>
 </body>
+<a href="form_inscription_connect.php?logout=1">Déconnexion</a>
 </html>

@@ -7,17 +7,6 @@
     <title>Accueil</title>
 </head>
 <body>
-    <?php
-session_start();
-
-if (isset($_SESSION['username'])) {
-    echo "<h1>Bienvenue ".htmlspecialchars($_SESSION['username'])."</h1>";
-    echo '<a href="form_incription_connect.php?logout=1">Déconnexion</a>';
-    exit;
-}
-?>
-
-    
     <h1>Incription</h1>
     <form action="form_incription_connect.php" method="POST">
 
@@ -51,7 +40,7 @@ if (isset($_SESSION['username'])) {
         
         <input type="submit" value="Valider" name="connect">
     </form>
-    
+
     
 </body>
 </html>
