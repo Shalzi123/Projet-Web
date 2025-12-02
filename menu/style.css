@@ -46,7 +46,162 @@ header h1 {
 header .subtitle {
     font-size: 1.2em;
     opacity: 0.95;
+    margin-bottom: 20px;
 }
+
+#toggle-creator {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    padding: 12px 24px;
+    font-weight: 600;
+}
+
+#toggle-creator:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ===== QUIZ CREATOR ===== */
+
+.quiz-creator {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 40px;
+    box-shadow: var(--shadow);
+    margin-bottom: 40px;
+    animation: slideDown 0.4s ease-out;
+}
+
+.quiz-creator h2 {
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--light-color);
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+}
+
+.question-block {
+    background: #f9f9f9;
+    border: 2px solid var(--light-color);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.question-block h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.option-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.option-input input[type="text"] {
+    flex: 1;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.checkbox-label input {
+    width: auto;
+    margin: 0;
+}
+
+.options-group {
+    margin-bottom: 15px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: var(--error-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.btn-create {
+    background: var(--success-color);
+    color: white;
+    margin-top: 10px;
+}
+
+.btn-create:hover {
+    background: #27ae60;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.form-actions .btn {
+    flex: 1;
+    max-width: 200px;
+}
+
+/* ===== QUIZZ CARDS ===== */
 
 .quizz-grid {
     display: grid;
@@ -63,6 +218,8 @@ header .subtitle {
     transition: all 0.3s ease;
     text-align: center;
     animation: fadeInUp 0.5s ease-out;
+    display: flex;
+    flex-direction: column;
 }
 
 .quizz-card:hover {
@@ -85,6 +242,7 @@ header .subtitle {
     color: #7f8c8d;
     margin-bottom: 20px;
     line-height: 1.5;
+    flex: 1;
 }
 
 .quizz-info {
@@ -95,6 +253,30 @@ header .subtitle {
     font-size: 0.9em;
     color: var(--text-color);
     font-weight: 600;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.custom-badge {
+    background: var(--success-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.card-actions .btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.95em;
 }
 
 /* ===== QUIZ APP STYLES ===== */
@@ -326,6 +508,10 @@ header .subtitle {
         font-size: 2em;
     }
 
+    .quiz-creator {
+        padding: 20px;
+    }
+
     .quizz-grid {
         grid-template-columns: 1fr;
     }
@@ -335,6 +521,22 @@ header .subtitle {
     }
 
     .btn {
+        width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        max-width: 100%;
+    }
+
+    .card-actions {
+        flex-direction: column;
+    }
+
+    .card-actions .btn {
         width: 100%;
     }
 }

@@ -10,9 +10,40 @@
     <main class="menu-app">
         <header>
             <h1>🎯 Centre de QCM</h1>
-            <p class="subtitle">Sélectionnez un quizz pour commencer</p>
+            <p class="subtitle">Sélectionnez un quizz pour commencer ou créez le vôtre</p>
+            <button id="toggle-creator" class="btn btn-create">+ Créer un nouveau quizz</button>
         </header>
 
+        <!-- Section Créateur de Quizz -->
+        <section id="quiz-creator" class="quiz-creator" hidden>
+            <h2>Créer un nouveau quizz</h2>
+            <form id="quiz-form">
+                <div class="form-group">
+                    <label for="quiz-title">Titre du quizz</label>
+                    <input type="text" id="quiz-title" placeholder="ex: Géographie Avancée" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quiz-description">Description</label>
+                    <input type="text" id="quiz-description" placeholder="ex: Testez vos connaissances..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quiz-icon">Emoji (icône)</label>
+                    <input type="text" id="quiz-icon" placeholder="ex: 🌍" maxlength="2" value="📝" required>
+                </div>
+
+                <div id="questions-container"></div>
+
+                <button type="button" id="add-question" class="btn btn-secondary">+ Ajouter une question</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">Créer le quizz</button>
+                    <button type="button" id="cancel-creator" class="btn">Annuler</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Section des Quizz -->
         <section class="quizz-grid" id="quizz-container">
             <!-- Les quizz seront générés par JavaScript -->
         </section>
