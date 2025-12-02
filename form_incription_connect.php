@@ -37,8 +37,13 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
 if (isset($_POST['register'])) {
 
     if (!empty($_POST['username']) && !empty($_POST['password'])) {
-
-        $hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $sth = $dbh->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
+        $sth->execute(['username' => $_POST['username']]);
+        $count = $sth->fetchColumn();
+        if($count>0){
+            echo "<b>Ce nom d'utilisateur existe déjà choisissez-en un autre.</b>";
+        } else{
+            $hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
         $sth = $dbh->prepare("INSERT INTO sql_utilisateur (username, password, role) VALUES (:username, :password, :role)");
         $sth->execute([
@@ -49,6 +54,7 @@ if (isset($_POST['register'])) {
         ]);
 
         echo "<b>Inscription Valider</b>";
+        }
     }
 }
 
@@ -62,6 +68,10 @@ if (isset($_POST['connect'])) {
 
         $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
+
+        if($role = 'admin'){
+            header("Location: adminpage.php");
+        }
 
         if (!empty($_POST['remember'])) {
 
