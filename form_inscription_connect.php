@@ -1,7 +1,7 @@
 <?php
 try {
     $dbh = new PDO(
-        'mysql:host=localhost;dbname=quizzeo;charset=utf8',
+        'mysql:host=localhost;dbname=quizzeo_sql;charset=utf8',
         'root',
         ''
     );
@@ -9,10 +9,10 @@ try {
     echo "Erreur de connexion BDD";
     exit;
 }
-
-session_set_cookie_params(14400);
+ 
+session_set_cookie_params(14400, "/", "", false, true);
 session_start();
-
+ 
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE remember_token IS NOT NULL");
@@ -21,6 +21,7 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     foreach ($users as $user) {
         if (password_verify($token, $user['remember_token'])) {
             $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
             break;
         }
     }
@@ -28,50 +29,36 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
         setcookie('remember_token', '', time() - 3600, "/");
     }
 }
-
+ 
 if (isset($_POST['register'])) {
     if (!empty($_POST['username']) && !empty($_POST['password'])) {
         $sth = $dbh->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
         $sth->execute(['username' => $_POST['username']]);
         $count = $sth->fetchColumn();
-        if($count>0){
+        if ($count > 0) {
             echo "<b>Ce nom d'utilisateur existe déjà choisissez-en un autre.</b>";
-        } else{
+        } else {
             $hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $sth = $dbh->prepare("INSERT INTO sql_utilisateur (username, password, role) VALUES (:username, :password, :role)");
             $sth->execute([
                 'username' => $_POST['username'],
                 'password' => $hash,
-                'role' => $_POST['role'] ?? 'user'
+                'role' => 'user'
             ]);
-            $stmt = $dbh->prepare("SELECT id FROM sql_utilisateur WHERE username = :username");
-            $stmt->execute(['username' => $_POST['username']]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($user && isset($user['id'])) {
-                $_SESSION['id'] = (int)$user['id'];
-            }
-            echo "<b>Inscription Valider</b>";
+            echo "<b>Inscription validée</b>";
         }
     }
 }
-
+ 
 if (isset($_POST['connect'])) {
     $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
     $stmt->execute(['username' => $_POST['username']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+ 
     if ($user && password_verify($_POST['password'], $user['password'])) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
-        if (isset($user['id'])) {
-            $_SESSION['id'] = (int)$user['id'];
-        }
-
-        if ($user['role'] === 'admin') {
-            header("Location: adminpage.php");
-            exit;
-        } 
-
+ 
         if (!empty($_POST['remember'])) {
             $token = bin2hex(random_bytes(32));
             $stmt = $dbh->prepare("UPDATE sql_utilisateur SET remember_token = :token WHERE username = :username");
@@ -88,14 +75,20 @@ if (isset($_POST['connect'])) {
                 false,
                 true
             );
-            header("Location: test.php");
         }
-    } else { 
-        header("Location: index.html?error=invalid_credentials");
-        exit;
+ 
+        if ($user['role'] === 'admin') {
+            header("Location: adminpage.php");
+            exit;
+        } else {
+            header("Location: test.php");
+            exit;
+        }
+    } else {
+        echo "Identifiants incorrects";
     }
 }
-
+ 
 if (isset($_GET['logout'])) {
     if (isset($_SESSION['username'])) {
         $stmt = $dbh->prepare("UPDATE sql_utilisateur SET remember_token = NULL WHERE username = :username");
@@ -106,7 +99,7 @@ if (isset($_GET['logout'])) {
     header("Location: index.php?success=logout");
     exit;
 }
- 
+
  
  
 function displaygroup($groupinfo){
