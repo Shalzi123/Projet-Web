@@ -1,16 +1,63 @@
+<?php
+session_set_cookie_params(14400);
+session_start();
+
+if (!isset($_SESSION['username'])) {
+    header('Location: index.php');
+    exit;
+}
+
+if (!isset($_GET['group_id'])) {
+    header('Location: groupes.php');
+    exit;
+}
+
+$group_id = intval($_GET['group_id']);
+
+try {
+    $dbh = new PDO(
+        'mysql:host=localhost;dbname=quizzeo;charset=utf8',
+        'root',
+        ''
+    );
+} catch (Exception $e) {
+    echo '<div style="color:red;font-weight:bold;margin:10px 0;">Erreur de connexion BDD</div>';
+    exit;
+}
+
+// Vérifier que l'utilisateur fait partie de ce groupe
+$stmt = $dbh->prepare("SELECT COUNT(*) FROM utilisateur_groups WHERE user_id = :user_id AND group_id = :group_id");
+$stmt->execute(['user_id' => $_SESSION['id'], 'group_id' => $group_id]);
+$is_member = $stmt->fetchColumn() > 0;
+
+if (!$is_member) {
+    header('Location: groupes.php');
+    exit;
+}
+
+// Récupérer les informations du groupe
+$stmt = $dbh->prepare("SELECT nomgroupe, descriptiongroupe FROM sql_groups WHERE id = :group_id");
+$stmt->execute(['group_id' => $group_id]);
+$groupe = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$groupe) {
+    header('Location: groupes.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centre QCM & Satisfaction</title>
+    <title><?php echo htmlspecialchars($groupe['nomgroupe']); ?> - Centre QCM & Satisfaction</title>
     <link rel="stylesheet" href="style2.css">
 </head>
 <body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
     <!-- Barre de navigation principale -->
     <nav class="main-nav">
         <div class="nav-container">
-            <h2 class="nav-logo">📚 Centre QCM & Satisfaction</h2>
+            <h2 class="nav-logo">📚 <?php echo htmlspecialchars($groupe['nomgroupe']); ?></h2>
             <div class="nav-buttons">
                 <button class="nav-btn active" data-app="menu" onclick="switchApp('menu')">🎯 Centre QCM</button>
                 <button class="nav-btn" data-app="satisfaction" onclick="switchApp('satisfaction')">📊 Indice de Satisfaction</button>
@@ -25,7 +72,7 @@
             <div class="menu-app">
                 <header>
                     <h1>🎯 Centre de QCM</h1>
-                    <p class="subtitle">Sélectionnez un quizz pour commencer ou créez le vôtre</p>
+                    <p class="subtitle"><?php echo htmlspecialchars($groupe['descriptiongroupe']); ?></p>
                     <button id="toggle-creator" class="btn btn-create">+ Créer un nouveau quizz</button>
                 </header>
 
@@ -58,13 +105,20 @@
                     </form>
                 </section>
 
-                <!-- Section des Quizz -->
-                <section class="quizz-grid" id="quizz-container">
-                    <!-- Les quizz seront générés par JavaScript -->
-                </section>
+                <!-- Section Liste des Quizz -->
+                <div id="quiz-list-section">
+                    <section class="quizz-grid" id="quizz-container">
+                        <!-- Les quizz seront générés par JavaScript -->
+                    </section>
+                </div>
+
+                <!-- Section Lecteur de Quiz -->
+                <div id="quiz-player-section" style="display: none;">
+                    <!-- Le quiz sera affiché ici par JavaScript -->
+                </div>
 
                 <footer class="footer">
-                    <a href="./index.php" class="btn-link">← Retour aux contrôles de base</a>
+                    <a href="./groupes.php" class="btn-link">← Retour aux groupes</a>
                 </footer>
             </div>
         </div>
@@ -199,6 +253,10 @@
         </div>
     </main>
 
+    <script>
+        // Passer l'ID du groupe au JavaScript
+        const CURRENT_GROUP_ID = <?php echo $group_id; ?>;
+    </script>
     <script src="script-menu.js" defer></script>
     <script src="script-satisfaction.js" defer></script>
     <script src="script-navigation.js" defer></script>

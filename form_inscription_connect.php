@@ -77,7 +77,7 @@ if (isset($_POST['connect'])) {
             );
         }
  
-        if ($user['role'] === 'admin') {
+        if ($_SESSION['role'] === 'admin') {
             header("Location: adminpage.php");
             exit;
         } else {

@@ -21,7 +21,7 @@ try {
 
 $groupes = [];
 if (isset($_SESSION['id'])) {
-    $stmt = $dbh->prepare("SELECT g.nomgroupe, g.descriptiongroupe FROM sql_groups g JOIN utilisateur_groups ug ON g.id = ug.group_id WHERE ug.user_id = :user_id");
+    $stmt = $dbh->prepare("SELECT g.id, g.nomgroupe, g.descriptiongroupe FROM sql_groups g JOIN utilisateur_groups ug ON g.id = ug.group_id WHERE ug.user_id = :user_id");
     $stmt->execute(['user_id' => $_SESSION['id']]);
     $groupes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -91,7 +91,7 @@ if (isset($_POST['creer_groupe']) && !empty($_POST['nomgroupe'])) {
                 <?php foreach ($groupes as $groupe) {?>
                     <div class="groupe-case">
 
-                        <div> <a href="groupe_page.html"><div class="groupe-nom"><?php echo htmlspecialchars($groupe['nomgroupe']); ?></div></a></div>
+                        <div> <a href="groupe_page.php?group_id=<?php echo $groupe['id']; ?>"><div class="groupe-nom"><?php echo htmlspecialchars($groupe['nomgroupe']); ?></div></a></div>
                         <div class="groupe-description">
                             <?php echo nl2br(htmlspecialchars($groupe['descriptiongroupe'])); ?>
                         </div>

@@ -1,26 +1,36 @@
 
 let quizzes = [];
-fetch('get_quizzes.php')
-    .then(response => response.json())
-    .then(data => {
-        quizzes = data;
-        // Appelle ici ta fonction d'affichage ou d'initialisation des quiz
-        // ex: displayQuizzes(quizzes);
-    });
 
-// Charger les quizz depuis localStorage
-function loadQuizzesFromStorage() {
-    const stored = localStorage.getItem('customQuizzes');
-    if (stored) {
-        const customQuizzes = JSON.parse(stored);
-        quizzes = [...quizzes, ...customQuizzes];
+// Charger les quizz depuis la base de données
+async function loadQuizzesFromDatabase() {
+    try {
+        // Récupérer l'ID du groupe actuel depuis la page PHP
+        const groupId = typeof CURRENT_GROUP_ID !== 'undefined' ? CURRENT_GROUP_ID : 0;
+        const response = await fetch(`quiz_api.php?action=getAll&group_id=${groupId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Transformer les données de la BD au format attendu
+            quizzes = data.quizzes.map(quiz => ({
+                id: quiz.id,
+                title: quiz.nom,
+                description: quiz.description,
+                icon: quiz.theme,
+                questions: quiz.questions.map(q => ({
+                    id: q.id,
+                    type: q.type,
+                    text: q.question,
+                    options: q.options,
+                    answer: q.reponse
+                }))
+            }));
+            renderQuizzes();
+        } else {
+            console.error('Erreur lors du chargement des quizzes:', data.error);
+        }
+    } catch (error) {
+        console.error('Erreur réseau:', error);
     }
-}
-
-// Sauvegarder les quizz custom dans localStorage
-function saveQuizzesToStorage() {
-    const customQuizzes = quizzes.filter(q => q.id > 6);
-    localStorage.setItem('customQuizzes', JSON.stringify(customQuizzes));
 }
 
 // Génération des cartes de quizz
@@ -31,7 +41,6 @@ function renderQuizzes() {
     quizzes.forEach(quiz => {
         const card = document.createElement('div');
         card.className = 'quizz-card';
-        const isCustom = quiz.id > 6;
         
         card.innerHTML = `
             <div class="quizz-icon">${quiz.icon}</div>
@@ -39,11 +48,10 @@ function renderQuizzes() {
             <p>${quiz.description}</p>
             <div class="quizz-info">
                 <span>${quiz.questions.length} questions</span>
-                ${isCustom ? '<span class="custom-badge">Personnalisé</span>' : ''}
             </div>
             <div class="card-actions">
                 <button class="btn primary" onclick="startQuiz(${quiz.id})">Commencer</button>
-                ${isCustom ? `<button class="btn btn-danger" onclick="deleteQuiz(${quiz.id})">Supprimer</button>` : ''}
+                <button class="btn btn-danger" onclick="deleteQuiz(${quiz.id})">Supprimer</button>
             </div>
         `;
         container.appendChild(card);
@@ -55,22 +63,211 @@ function startQuiz(quizId) {
     const quiz = quizzes.find(q => q.id === quizId);
     if (!quiz) return;
 
-    // Stocker les données du quizz dans sessionStorage
-    sessionStorage.setItem('currentQuiz', JSON.stringify({
-        title: quiz.title,
-        questions: quiz.questions
-    }));
+    // Cacher le menu principal et afficher le quiz
+    document.getElementById('quiz-list-section').style.display = 'none';
+    document.getElementById('quiz-player-section').style.display = 'block';
+    
+    // Initialiser le lecteur de quiz
+    displayQuiz(quiz);
+}
 
-    // Rediriger vers la page du quizz
-    window.location.href = `../basequizz/index.html?quiz=${quizId}`;
+// Afficher le quiz
+let currentQuiz = null;
+let currentQuestionIndex = 0;
+let userAnswers = [];
+
+function displayQuiz(quiz) {
+    currentQuiz = quiz;
+    currentQuestionIndex = 0;
+    userAnswers = new Array(quiz.questions.length).fill(null);
+    
+    const playerSection = document.getElementById('quiz-player-section');
+    playerSection.innerHTML = `
+        <div class="quiz-player">
+            <header class="quiz-header">
+                <h2>${quiz.icon} ${quiz.title}</h2>
+                <p>${quiz.description}</p>
+                <div class="quiz-progress">
+                    <span>Question <span id="current-q">1</span> / ${quiz.questions.length}</span>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill" style="width: ${(1/quiz.questions.length)*100}%"></div>
+                    </div>
+                </div>
+            </header>
+            
+            <div id="question-content" class="question-content"></div>
+            
+            <div class="quiz-navigation">
+                <button id="prev-btn" class="btn" onclick="previousQuestion()" disabled>← Précédent</button>
+                <button id="next-btn" class="btn primary" onclick="nextQuestion()">Suivant →</button>
+                <button id="submit-btn" class="btn primary" onclick="submitQuiz()" style="display: none;">Terminer le quiz</button>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="exitQuiz()" style="margin-top: 20px;">Quitter le quiz</button>
+        </div>
+    `;
+    
+    displayQuestion(0);
+}
+
+function displayQuestion(index) {
+    const question = currentQuiz.questions[index];
+    const questionContent = document.getElementById('question-content');
+    
+    let optionsHTML = '';
+    question.options.forEach((option, i) => {
+        const inputType = question.type === 'single' ? 'radio' : 'checkbox';
+        const checked = userAnswers[index] && userAnswers[index].includes(i) ? 'checked' : '';
+        optionsHTML += `
+            <label class="quiz-option">
+                <input type="${inputType}" name="answer" value="${i}" ${checked} onchange="saveAnswer(${i})">
+                <span>${option}</span>
+            </label>
+        `;
+    });
+    
+    questionContent.innerHTML = `
+        <div class="question-card">
+            <h3>Question ${index + 1}</h3>
+            <p class="question-text">${question.text}</p>
+            <div class="options-list">
+                ${optionsHTML}
+            </div>
+        </div>
+    `;
+    
+    // Mettre à jour les boutons de navigation
+    document.getElementById('prev-btn').disabled = index === 0;
+    document.getElementById('current-q').textContent = index + 1;
+    document.getElementById('progress-fill').style.width = `${((index + 1) / currentQuiz.questions.length) * 100}%`;
+    
+    // Afficher le bouton terminer sur la dernière question
+    if (index === currentQuiz.questions.length - 1) {
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('submit-btn').style.display = 'inline-block';
+    } else {
+        document.getElementById('next-btn').style.display = 'inline-block';
+        document.getElementById('submit-btn').style.display = 'none';
+    }
+}
+
+function saveAnswer(optionIndex) {
+    const question = currentQuiz.questions[currentQuestionIndex];
+    
+    if (question.type === 'single') {
+        userAnswers[currentQuestionIndex] = [optionIndex];
+    } else {
+        if (!userAnswers[currentQuestionIndex]) {
+            userAnswers[currentQuestionIndex] = [];
+        }
+        const answers = userAnswers[currentQuestionIndex];
+        const idx = answers.indexOf(optionIndex);
+        if (idx > -1) {
+            answers.splice(idx, 1);
+        } else {
+            answers.push(optionIndex);
+        }
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+        currentQuestionIndex++;
+        displayQuestion(currentQuestionIndex);
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        displayQuestion(currentQuestionIndex);
+    }
+}
+
+function submitQuiz() {
+    // Calculer le score
+    let correctAnswers = 0;
+    currentQuiz.questions.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        const correctAnswer = question.answer;
+        
+        if (userAnswer && JSON.stringify(userAnswer.sort()) === JSON.stringify(correctAnswer.sort())) {
+            correctAnswers++;
+        }
+    });
+    
+    const score = (correctAnswers / currentQuiz.questions.length) * 100;
+    
+    // Afficher les résultats
+    const playerSection = document.getElementById('quiz-player-section');
+    playerSection.innerHTML = `
+        <div class="quiz-results">
+            <h2>🎉 Quiz terminé !</h2>
+            <div class="score-display">
+                <div class="score-circle">
+                    <span class="score-number">${Math.round(score)}%</span>
+                </div>
+                <p class="score-text">${correctAnswers} / ${currentQuiz.questions.length} réponses correctes</p>
+            </div>
+            
+            <div class="results-details">
+                <h3>Détails des réponses</h3>
+                ${currentQuiz.questions.map((q, i) => {
+                    const userAnswer = userAnswers[i] || [];
+                    const isCorrect = JSON.stringify(userAnswer.sort()) === JSON.stringify(q.answer.sort());
+                    return `
+                        <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
+                            <h4>${isCorrect ? '✓' : '✗'} Question ${i + 1}</h4>
+                            <p>${q.text}</p>
+                            <p><strong>Votre réponse:</strong> ${userAnswer.map(idx => q.options[idx]).join(', ') || 'Aucune réponse'}</p>
+                            <p><strong>Réponse correcte:</strong> ${q.answer.map(idx => q.options[idx]).join(', ')}</p>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <div class="results-actions">
+                <button class="btn primary" onclick="startQuiz(${currentQuiz.id})">Recommencer</button>
+                <button class="btn" onclick="exitQuiz()">Retour aux quiz</button>
+            </div>
+        </div>
+    `;
+}
+
+function exitQuiz() {
+    document.getElementById('quiz-player-section').style.display = 'none';
+    document.getElementById('quiz-list-section').style.display = 'block';
+    currentQuiz = null;
+    currentQuestionIndex = 0;
+    userAnswers = [];
 }
 
 // Supprimer un quizz
-function deleteQuiz(quizId) {
+async function deleteQuiz(quizId) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce quizz ?')) {
-        quizzes = quizzes.filter(q => q.id !== quizId);
-        saveQuizzesToStorage();
-        renderQuizzes();
+        try {
+            const formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('quiz_id', quizId);
+            
+            const response = await fetch('quiz_api.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                quizzes = quizzes.filter(q => q.id !== quizId);
+                renderQuizzes();
+                alert('Quizz supprimé avec succès !');
+            } else {
+                alert('Erreur lors de la suppression: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+            alert('Erreur de connexion');
+        }
     }
 }
 
@@ -191,7 +388,7 @@ function updateQuestionType(questionId, type) {
 }
 
 // Créer le quizz
-function createQuiz(event) {
+async function createQuiz(event) {
     event.preventDefault();
 
     const title = document.getElementById('quiz-title').value;
@@ -226,30 +423,55 @@ function createQuiz(event) {
 
     if (questions.length === 0) return;
 
+    // Récupérer l'ID du groupe actuel
+    const groupId = typeof CURRENT_GROUP_ID !== 'undefined' ? CURRENT_GROUP_ID : 0;
+
     const newQuiz = {
-        id: Math.max(...quizzes.map(q => q.id)) + 1,
-        title,
-        description,
-        icon,
-        questions
+        nom: title,
+        description: description,
+        theme: icon,
+        icon: icon,
+        questions: questions,
+        group_id: groupId
     };
 
-    quizzes.push(newQuiz);
-    saveQuizzesToStorage();
-
-    // Réinitialiser le formulaire
-    document.getElementById('quiz-form').reset();
-    document.getElementById('questions-container').innerHTML = '';
-    document.getElementById('quiz-creator').hidden = true;
-
-    renderQuizzes();
-    alert(`Quizz "${title}" créé avec succès !`);
+    // Envoyer à la base de données
+    try {
+        const response = await fetch('quiz_api.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'create',
+                ...newQuiz
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Réinitialiser le formulaire
+            document.getElementById('quiz-form').reset();
+            document.getElementById('questions-container').innerHTML = '';
+            document.getElementById('quiz-creator').hidden = true;
+            
+            // Recharger les quizzes depuis la BD
+            await loadQuizzesFromDatabase();
+            
+            alert(`Quizz "${title}" créé avec succès !`);
+        } else {
+            alert('Erreur lors de la création: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Erreur réseau:', error);
+        alert('Erreur de connexion');
+    }
 }
 
 // Initialisation menu
 function initMenu() {
-    loadQuizzesFromStorage();
-    renderQuizzes();
+    loadQuizzesFromDatabase();
 
     const toggleCreatorBtn = document.getElementById('toggle-creator');
     if (toggleCreatorBtn) {
@@ -274,3 +496,18 @@ function initMenu() {
 
 // Appeler l'initialisation quand le DOM est prêt
 document.addEventListener('DOMContentLoaded', initMenu);
+
+// Capturer les promesses non gérées et erreurs globales pour debug
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason, event);
+    try {
+        // afficher une alerte légère pour l'utilisateur
+        // (en production on pourrait envoyer ces infos au serveur)
+        // évitez d'appeler alert trop souvent
+        console.warn('Une erreur asynchrone est survenue. Voir console pour détails.');
+    } catch (e) {}
+});
+
+window.addEventListener('error', function(event) {
+    console.error('Unhandled error:', event.message, 'at', event.filename + ':' + event.lineno + ':' + event.colno, event.error);
+});
