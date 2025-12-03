@@ -11,7 +11,7 @@ try {
     exit;
 }
 
-session_set_cookie_params(14400);
+session_set_cookie_params(14400, "/", false, true);
 session_start();
 
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
@@ -71,9 +71,9 @@ if (isset($_POST['connect'])) {
 
         if ($user  ['role'] === 'admin') {
             header("Location: adminpage.php");
-            exit;} else {
+            } else {
                 header("Location: test.php");
-                exit;}
+                }
 
 
 
