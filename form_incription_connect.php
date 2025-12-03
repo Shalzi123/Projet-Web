@@ -10,11 +10,11 @@ try {
     exit;
 }
 
-session_set_cookie_params(14400, "/", "", false, true);
+session_set_cookie_params(10, "/", "", false, true);
 session_start();
 
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
-    
+
     $token = $_COOKIE['remember_token'];
     $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE remember_token IS NOT NULL");
     $stmt->execute();
