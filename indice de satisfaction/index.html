@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indice de Satisfaction Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête -->
+        <header class="header">
+            <h1>📊 Indice de Satisfaction</h1>
+            <p class="subtitle">Gérez et analysez la satisfaction de vos clients</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="dashboard">Tableau de bord</button>
+            <button class="tab-btn" data-tab="create-survey">Créer un questionnaire</button>
+            <button class="tab-btn" data-tab="surveys">Mes questionnaires</button>
+            <button class="tab-btn" data-tab="results">Résultats</button>
+        </nav>
+
+        <!-- Tableau de bord -->
+        <section id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <h3>Score Global</h3>
+                    <div class="stat-value" id="globalScore">0%</div>
+                    <p class="stat-label">Moyenne générale</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Questionnaires</h3>
+                    <div class="stat-value" id="surveyCount">0</div>
+                    <p class="stat-label">Actifs</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Réponses</h3>
+                    <div class="stat-value" id="responseCount">0</div>
+                    <p class="stat-label">Total</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Taux de satisfaction</h3>
+                    <div class="stat-value" id="satisfactionRate">0%</div>
+                    <p class="stat-label">Clients satisfaits (≥4/5)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Créer un questionnaire -->
+        <section id="create-survey" class="tab-content">
+            <div class="form-section">
+                <h2>Créer un nouveau questionnaire</h2>
+                <form id="surveyForm" class="survey-form">
+                    <div class="form-group">
+                        <label for="surveyTitle">Titre du questionnaire</label>
+                        <input type="text" id="surveyTitle" placeholder="Ex: Satisfaction juin 2024" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="surveyDescription">Description</label>
+                        <textarea id="surveyDescription" placeholder="Décrivez l'objectif du questionnaire" rows="3"></textarea>
+                    </div>
+
+                    <div class="questions-section">
+                        <h3>Questions</h3>
+                        <div id="questionsList"></div>
+                        <button type="button" class="btn-secondary" id="addQuestionBtn">+ Ajouter une question</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Créer le questionnaire</button>
+                        <button type="reset" class="btn-secondary">Réinitialiser</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Mes questionnaires -->
+        <section id="surveys" class="tab-content">
+            <h2>Mes questionnaires</h2>
+            <div id="surveysList" class="surveys-list">
+                <p class="empty-state">Aucun questionnaire créé. <a href="#" onclick="switchTab('create-survey')">Créez-en un</a></p>
+            </div>
+        </section>
+
+        <!-- Résultats -->
+        <section id="results" class="tab-content">
+            <h2>Résultats et Analyses</h2>
+            <div id="resultsList" class="results-list">
+                <p class="empty-state">Aucun résultat disponible pour le moment.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal pour répondre à un questionnaire -->
+    <div id="responseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <p id="modalDescription"></p>
+            <form id="responseForm" class="response-form">
+                <div id="questionsResponse"></div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Soumettre les réponses</button>
+                    <button type="button" class="btn-secondary" onclick="closeResponseModal()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pour afficher les détails d'un questionnaire -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content modal-lg">
+            <span class="close">&times;</span>
+            <h2 id="detailsTitle"></h2>
+            <div class="details-tabs">
+                <button class="details-tab-btn active" data-details-tab="info">Informations</button>
+                <button class="details-tab-btn" data-details-tab="responses">Réponses</button>
+            </div>
+            <div id="info" class="details-tab-content active">
+                <div id="surveyDetails"></div>
+            </div>
+            <div id="responses" class="details-tab-content">
+                <div id="responsesList"></div>
+            </div>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn-primary" id="respondBtn">Répondre au questionnaire</button>
+                <button type="button" class="btn-danger" id="deleteBtn">Supprimer</button>
+                <button type="button" class="btn-secondary" onclick="closeDetailsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
