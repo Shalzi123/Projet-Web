@@ -1,12 +1,12 @@
 <?php
 $message = '';
 try {
-    $dbh = new PDO(
-        'mysql:host=localhost;dbname=quizzeo;charset=utf8',
+    $database = new PDO(
+        'mysql:host=localhost;dbname=quizzeo;charset=utf8mb4',
         'root',
         ''
     );
-} catch (Exception $e) {
+} catch (Exception $exception) {
     $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Erreur de connexion BDD</div>';
 }
 
@@ -15,7 +15,7 @@ session_start();
 
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
-    $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE remember_token IS NOT NULL");
+    $stmt = $database->prepare("SELECT * FROM sql_utilisateur WHERE remember_token IS NOT NULL");
     $stmt->execute();
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($users as $user) {
@@ -31,20 +31,20 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
 
 if (isset($_POST['register'])) {
     if (!empty($_POST['username']) && !empty($_POST['password'])) {
-        $sth = $dbh->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
-        $sth->execute(['username' => $_POST['username']]);
-        $count = $sth->fetchColumn();
-        if($count>0){
+        $stmt = $database->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
+        $stmt->execute(['username' => $_POST['username']]);
+        $count = $stmt->fetchColumn();
+        if ($count > 0) {
             $message = "<div style='color:red;font-weight:bold;margin:10px 0;'>Ce nom d'utilisateur existe déjà choisissez-en un autre.</div>";
-        } else{
+        } else {
             $hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
-            $sth = $dbh->prepare("INSERT INTO sql_utilisateur (username, password, role) VALUES (:username, :password, :role)");
-            $sth->execute([
+            $stmt = $database->prepare("INSERT INTO sql_utilisateur (username, password, role) VALUES (:username, :password, :role)");
+            $stmt->execute([
                 'username' => $_POST['username'],
                 'password' => $hash,
                 'role' => $_POST['role'] ?? 'user'
             ]);
-            $stmt = $dbh->prepare("SELECT id FROM sql_utilisateur WHERE username = :username");
+            $stmt = $database->prepare("SELECT id FROM sql_utilisateur WHERE username = :username");
             $stmt->execute(['username' => $_POST['username']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user && isset($user['id'])) {
@@ -59,7 +59,7 @@ if (isset($_POST['register'])) {
 }
 
 if (isset($_POST['connect'])) {
-    $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
+    $stmt = $database->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
     $stmt->execute(['username' => $_POST['username']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -73,15 +73,15 @@ if (isset($_POST['connect'])) {
                 $_SESSION['id'] = (int)$user['id'];
             }
             if (!empty($_POST['remember'])) {
-                $token = bin2hex(random_bytes(32));
-                $stmt = $dbh->prepare("UPDATE sql_utilisateur SET remember_token = :token WHERE username = :username");
+                $rememberToken = bin2hex(random_bytes(32));
+                $stmt = $database->prepare("UPDATE sql_utilisateur SET remember_token = :token WHERE username = :username");
                 $stmt->execute([
-                    'token' => password_hash($token, PASSWORD_DEFAULT),
+                    'token' => password_hash($rememberToken, PASSWORD_DEFAULT),
                     'username' => $user['username']
                 ]);
                 setcookie(
                     "remember_token",
-                    $token,
+                    $rememberToken,
                     time() + (60 * 60 * 24 * 30),
                     "/",
                     "",
@@ -109,13 +109,14 @@ if (isset($_POST['connect'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quizzeo</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
 </head>
 <body>
     <div class="header">
-        <img src="images/quizzeo_logo.png" alt="Logo Quizzeo" class="logo" style="max-width: 350px;">
+        <a href="index.php" style="display: inline-block; text-decoration: none;">
+            <img src="images/quizzeo_logo.png" alt="Logo Quizzeo" class="logo" style="max-width: 350px; cursor: pointer;">
+        </a>
     </div>
-    <?php if(!empty($message)) echo $message; ?>
     <div class="formulaire">
     <h1>Connexion</h1>
     <form class="form" method="POST">

@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style2.css">
 </head>
 <body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
-    <!-- Barre de navigation principale -->
     <nav class="main-nav">
         <div class="nav-container">
             <h2 class="nav-logo">📚 Centre QCM & Satisfaction</h2>
@@ -18,9 +17,7 @@
         </div>
     </nav>
 
-    <!-- Container principal -->
     <main class="app-container">
-        <!-- APP 1: Menu QCM -->
         <div id="menu" class="app-page active">
             <div class="menu-app">
                 <header>
@@ -29,7 +26,6 @@
                     <button id="toggle-creator" class="btn btn-create">+ Créer un nouveau quizz</button>
                 </header>
 
-                <!-- Section Créateur de Quizz -->
                 <section id="quiz-creator" class="quiz-creator" hidden>
                     <h2>Créer un nouveau quizz</h2>
                     <form id="quiz-form">
@@ -58,9 +54,7 @@
                     </form>
                 </section>
 
-                <!-- Section des Quizz -->
                 <section class="quizz-grid" id="quizz-container">
-                    <!-- Les quizz seront générés par JavaScript -->
                 </section>
 
                 <footer class="footer">
@@ -69,16 +63,13 @@
             </div>
         </div>
 
-        <!-- APP 2: Indice de Satisfaction -->
         <div id="satisfaction" class="app-page">
             <div class="container">
-                <!-- En-tête -->
                 <header class="header">
                     <h1>📊 Indice de Satisfaction</h1>
                     <p class="subtitle">Gérez et analysez la satisfaction de vos clients</p>
                 </header>
 
-                <!-- Navigation -->
                 <nav class="nav-tabs">
                     <button class="tab-btn active" data-tab="dashboard">Tableau de bord</button>
                     <button class="tab-btn" data-tab="create-survey">Créer un questionnaire</button>
@@ -86,7 +77,6 @@
                     <button class="tab-btn" data-tab="results">Résultats</button>
                 </nav>
 
-                <!-- Tableau de bord -->
                 <section id="dashboard" class="tab-content active">
                     <div class="dashboard-grid">
                         <div class="stat-card">
@@ -112,7 +102,6 @@
                     </div>
                 </section>
 
-                <!-- Créer un questionnaire -->
                 <section id="create-survey" class="tab-content">
                     <div class="form-section">
                         <h2>Créer un nouveau questionnaire</h2>
@@ -141,7 +130,6 @@
                     </div>
                 </section>
 
-                <!-- Mes questionnaires -->
                 <section id="surveys" class="tab-content">
                     <h2>Mes questionnaires</h2>
                     <div id="surveysList" class="surveys-list">
@@ -149,7 +137,6 @@
                     </div>
                 </section>
 
-                <!-- Résultats -->
                 <section id="results" class="tab-content">
                     <h2>Résultats et Analyses</h2>
                     <div id="resultsList" class="results-list">
@@ -158,7 +145,6 @@
                 </section>
             </div>
 
-            <!-- Modal pour répondre à un questionnaire -->
             <div id="responseModal" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
@@ -174,7 +160,6 @@
                 </div>
             </div>
 
-            <!-- Modal pour afficher les détails d'un questionnaire -->
             <div id="detailsModal" class="modal">
                 <div class="modal-content modal-lg">
                     <span class="close">&times;</span>

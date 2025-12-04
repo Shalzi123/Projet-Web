@@ -12,38 +12,40 @@ if (!isset($_GET['group_id'])) {
     exit;
 }
 
-$group_id = intval($_GET['group_id']);
+$groupId = intval($_GET['group_id']);
 
 try {
-    $dbh = new PDO(
-        'mysql:host=localhost;dbname=quizzeo;charset=utf8',
+    $database = new PDO(
+        'mysql:host=localhost;dbname=quizzeo;charset=utf8mb4',
         'root',
         ''
     );
-} catch (Exception $e) {
+} catch (Exception $exception) {
     echo '<div style="color:red;font-weight:bold;margin:10px 0;">Erreur de connexion BDD</div>';
     exit;
 }
 
-// Vérifier que l'utilisateur fait partie de ce groupe
-$stmt = $dbh->prepare("SELECT COUNT(*) FROM utilisateur_groups WHERE user_id = :user_id AND group_id = :group_id");
-$stmt->execute(['user_id' => $_SESSION['id'], 'group_id' => $group_id]);
-$is_member = $stmt->fetchColumn() > 0;
+$stmt = $database->prepare("SELECT COUNT(*) FROM utilisateur_groups WHERE user_id = :user_id AND group_id = :group_id");
+$stmt->execute(['user_id' => $_SESSION['id'], 'group_id' => $groupId]);
+$isMember = $stmt->fetchColumn() > 0;
 
-if (!$is_member) {
+if (!$isMember) {
     header('Location: groupes.php');
     exit;
 }
 
-// Récupérer les informations du groupe
-$stmt = $dbh->prepare("SELECT nomgroupe, descriptiongroupe FROM sql_groups WHERE id = :group_id");
-$stmt->execute(['group_id' => $group_id]);
+$stmt = $database->prepare("SELECT nomgroupe, descriptiongroupe FROM sql_groups WHERE id = :group_id");
+$stmt->execute(['group_id' => $groupId]);
 $groupe = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$groupe) {
     header('Location: groupes.php');
     exit;
 }
+
+$canInvite = isset($_SESSION['role']) && ($_SESSION['role'] === 'entreprise' || $_SESSION['role'] === 'ecole');
+
+$canCreateQuiz = isset($_SESSION['role']) && ($_SESSION['role'] === 'entreprise' || $_SESSION['role'] === 'ecole');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -51,33 +53,491 @@ if (!$groupe) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($groupe['nomgroupe']); ?> - Centre QCM & Satisfaction</title>
-    <link rel="stylesheet" href="style2.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .quiz-container {
+            max-width: 1200px;
+            margin: 90px auto 20px;
+            padding: 20px;
+        }
+        
+        .quiz-header-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-header-section h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .quiz-header-section .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .btn-create {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quiz-creator {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quizz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .quizz-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .quizz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quizz-icon {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .quizz-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+        
+        .quizz-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .quizz-info {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .quiz-player {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .quiz-header h2 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .quiz-progress {
+            margin-top: 20px;
+        }
+        
+        .quiz-progress span {
+            display: block;
+            margin-bottom: 10px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .question-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .question-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .question-text {
+            color: #333;
+            font-size: 1.3em;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .quiz-option input[type="radio"],
+        .quiz-option input[type="checkbox"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .quiz-option span {
+            flex: 1;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        .quiz-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .quiz-navigation button {
+            flex: 1;
+            padding: 12px 24px;
+        }
+        
+        .quiz-results {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quiz-results h2 {
+            text-align: center;
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        
+        .score-display {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        
+        .score-number {
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+        }
+        
+        .score-text {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .results-details {
+            margin-top: 40px;
+        }
+        
+        .results-details h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .result-item {
+            background: #f9f9f9;
+            border-left: 4px solid #ddd;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        
+        .result-item.correct {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        
+        .result-item.incorrect {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+        
+        .result-item h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .result-item.correct h4 {
+            color: #4caf50;
+        }
+        
+        .result-item.incorrect h4 {
+            color: #f44336;
+        }
+        
+        .result-item p {
+            margin: 8px 0;
+            color: #666;
+        }
+        
+        .results-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .results-actions button {
+            padding: 12px 30px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .results-actions button:hover {
+            background-color: #5a6268;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        
+        .results-actions button.primary {
+            background-color: #0056ab;
+            color: white;
+        }
+        
+        .results-actions button.primary:hover {
+            background-color: #003e7a;
+        }
+        
+        .question-block {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        
+        .option-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .option-input input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+    </style>
 </head>
-<body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
-    <!-- Barre de navigation principale -->
-    <nav class="main-nav">
-        <div class="nav-container">
-            <h2 class="nav-logo">📚 <?php echo htmlspecialchars($groupe['nomgroupe']); ?></h2>
-            <div class="nav-buttons">
-                <button class="nav-btn active" data-app="menu" onclick="switchApp('menu')">🎯 Centre QCM</button>
-                <button class="nav-btn" data-app="satisfaction" onclick="switchApp('satisfaction')">📊 Indice de Satisfaction</button>
+<body data-user-role="<?php echo isset($_SESSION['role']) ? $_SESSION['role'] : 'utilisateur'; ?>">
+    <div class="header">
+        <a href="<?php echo isset($_SESSION['username']) ? 'groupes.php' : 'index.php'; ?>" style="display: inline-block; text-decoration: none;">
+            <img src="images/quizzeo_logo.png" alt="Logo Quizzeo" class="logo" style="max-width: 350px; cursor: pointer;">
+        </a>
+        <a href="logout.php" class="logout-btn" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background-color: #dc3545; color: #ffffff; border: none; padding: 10px 25px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Déconnexion</a>
+    </div>
+
+    <div class="quiz-container">
+        <div class="quiz-header-section">
+            <h1>🎯 <?php echo htmlspecialchars($groupe['nomgroupe']); ?></h1>
+            <p class="subtitle"><?php echo htmlspecialchars($groupe['descriptiongroupe']); ?></p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+                <?php if ($canCreateQuiz): ?>
+                <button id="toggle-creator" class="btn-create">+ Créer un nouveau quizz</button>
+                <?php endif; ?>
+                <?php if ($canInvite): ?>
+                <button id="generate-invite" class="btn-create" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">🔗 Inviter des membres</button>
+                <?php endif; ?>
             </div>
         </div>
-    </nav>
+        
+        <!-- Modal pour le lien d'invitation -->
+        <div id="invite-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+                <h2 style="margin-bottom: 20px; color: #333;">Lien d'invitation</h2>
+                <p style="color: #666; margin-bottom: 15px;">Partagez ce lien pour inviter des personnes à rejoindre ce groupe:</p>
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; word-break: break-all;">
+                    <input type="text" id="invite-url-display" readonly style="width: 100%; border: none; background: transparent; font-family: monospace; font-size: 0.9em; color: #333;">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="copyInviteLink()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">📋 Copier le lien</button>
+                    <button onclick="closeInviteModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Fermer</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- Container principal -->
-    <main class="app-container">
-        <!-- APP 1: Menu QCM -->
-        <div id="menu" class="app-page active">
-            <div class="menu-app">
-                <header>
-                    <h1>🎯 Centre de QCM</h1>
-                    <p class="subtitle"><?php echo htmlspecialchars($groupe['descriptiongroupe']); ?></p>
-                    <button id="toggle-creator" class="btn btn-create">+ Créer un nouveau quizz</button>
-                </header>
-
-                <!-- Section Créateur de Quizz -->
-                <section id="quiz-creator" class="quiz-creator" hidden>
+        <!-- Section Créateur de Quizz -->
+        <?php if ($canCreateQuiz): ?>
+        <section id="quiz-creator" class="quiz-creator" hidden>
                     <h2>Créer un nouveau quizz</h2>
                     <form id="quiz-form">
                         <div class="form-group">
@@ -104,35 +564,28 @@ if (!$groupe) {
                         </div>
                     </form>
                 </section>
+        <?php endif; ?>
 
-                <!-- Section Liste des Quizz -->
-                <div id="quiz-list-section">
-                    <section class="quizz-grid" id="quizz-container">
-                        <!-- Les quizz seront générés par JavaScript -->
-                    </section>
-                </div>
-
-                <!-- Section Lecteur de Quiz -->
-                <div id="quiz-player-section" style="display: none;">
-                    <!-- Le quiz sera affiché ici par JavaScript -->
-                </div>
-
-                <footer class="footer">
-                    <a href="./groupes.php" class="btn-link">← Retour aux groupes</a>
-                </footer>
+        <div id="quiz-list-section">
+            <div class="quizz-grid" id="quizz-container">
             </div>
         </div>
 
-        <!-- APP 2: Indice de Satisfaction -->
-        <div id="satisfaction" class="app-page">
-            <div class="container">
-                <!-- En-tête -->
-                <header class="header">
-                    <h1>📊 Indice de Satisfaction</h1>
-                    <p class="subtitle">Gérez et analysez la satisfaction de vos clients</p>
-                </header>
+        <div id="quiz-player-section" style="display: none;">
+        </div>
 
-                <!-- Navigation -->
+        <div class="footer">
+            <a href="./groupes.php" class="btn-link">← Retour aux groupes</a>
+        </div>
+    </div>
+
+    <div id="satisfaction" style="display: none;">
+        <div class="quiz-container">
+            <div class="quiz-header-section">
+                <h1>📊 Indice de Satisfaction</h1>
+                <p class="subtitle">Gérez et analysez la satisfaction de vos clients</p>
+            </div>
+
                 <nav class="nav-tabs">
                     <button class="tab-btn active" data-tab="dashboard">Tableau de bord</button>
                     <button class="tab-btn" data-tab="create-survey">Créer un questionnaire</button>
@@ -140,7 +593,6 @@ if (!$groupe) {
                     <button class="tab-btn" data-tab="results">Résultats</button>
                 </nav>
 
-                <!-- Tableau de bord -->
                 <section id="dashboard" class="tab-content active">
                     <div class="dashboard-grid">
                         <div class="stat-card">
@@ -166,7 +618,6 @@ if (!$groupe) {
                     </div>
                 </section>
 
-                <!-- Créer un questionnaire -->
                 <section id="create-survey" class="tab-content">
                     <div class="form-section">
                         <h2>Créer un nouveau questionnaire</h2>
@@ -195,7 +646,6 @@ if (!$groupe) {
                     </div>
                 </section>
 
-                <!-- Mes questionnaires -->
                 <section id="surveys" class="tab-content">
                     <h2>Mes questionnaires</h2>
                     <div id="surveysList" class="surveys-list">
@@ -203,7 +653,6 @@ if (!$groupe) {
                     </div>
                 </section>
 
-                <!-- Résultats -->
                 <section id="results" class="tab-content">
                     <h2>Résultats et Analyses</h2>
                     <div id="resultsList" class="results-list">
@@ -212,7 +661,6 @@ if (!$groupe) {
                 </section>
             </div>
 
-            <!-- Modal pour répondre à un questionnaire -->
             <div id="responseModal" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
@@ -228,7 +676,6 @@ if (!$groupe) {
                 </div>
             </div>
 
-            <!-- Modal pour afficher les détails d'un questionnaire -->
             <div id="detailsModal" class="modal">
                 <div class="modal-content modal-lg">
                     <span class="close">&times;</span>
@@ -251,11 +698,68 @@ if (!$groupe) {
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
-        // Passer l'ID du groupe au JavaScript
-        const CURRENT_GROUP_ID = <?php echo $group_id; ?>;
+        const CURRENT_GROUP_ID = <?php echo $groupId; ?>;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateBtn = document.getElementById('generate-invite');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', async function() {
+                    try {
+                        const formData = new FormData();
+                        formData.append('action', 'generate');
+                        formData.append('group_id', CURRENT_GROUP_ID);
+                        
+                        const response = await fetch('invite_link.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            document.getElementById('invite-url-display').value = data.invite_url;
+                            document.getElementById('invite-modal').style.display = 'flex';
+                        } else {
+                            alert('Erreur: ' + data.error);
+                        }
+                    } catch (error) {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la génération du lien');
+                    }
+                });
+            }
+        });
+        
+        function closeInviteModal() {
+            document.getElementById('invite-modal').style.display = 'none';
+        }
+        
+        function copyInviteLink() {
+            const input = document.getElementById('invite-url-display');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                alert('Lien copié dans le presse-papier !');
+            } catch (err) {
+                navigator.clipboard.writeText(input.value).then(function() {
+                    alert('Lien copié dans le presse-papier !');
+                }).catch(function(err) {
+                    alert('Impossible de copier le lien. Veuillez le copier manuellement.');
+                });
+            }
+        }
+        
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('invite-modal');
+            if (event.target === modal) {
+                closeInviteModal();
+            }
+        });
     </script>
     <script src="script-menu.js" defer></script>
     <script src="script-satisfaction.js" defer></script>

@@ -1,11 +1,11 @@
 <?php
 try {
-    $dbh = new PDO(
-        'mysql:host=localhost;dbname=quizzeo_sql;charset=utf8',
+    $database = new PDO(
+        'mysql:host=localhost;dbname=quizzeo;charset=utf8mb4',
         'root',
         ''
     );
-} catch (Exception $e) {
+} catch (Exception $exception) {
     echo "Erreur de connexion BDD";
     exit;
 }
@@ -123,14 +123,14 @@ function showgroups($dbh){
         return;
     }
 
-    $user_id = (int)$_SESSION['id'];
+    $userId = (int)$_SESSION['id'];
 
     try {
-        $sth = $dbh->prepare("SELECT g.* FROM utilisateur_groups ug JOIN sql_groups g ON ug.group_id = g.id WHERE ug.user_id = :user_id");
-        $sth->execute(['user_id' => $user_id]);
-        $groups = $sth->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        echo "<p>Erreur lors de la récupération des groupes : " . htmlspecialchars($e->getMessage()) . "</p>";
+        $stmt = $database->prepare("SELECT g.* FROM utilisateur_groups ug JOIN sql_groups g ON ug.group_id = g.id WHERE ug.user_id = :user_id");
+        $stmt->execute(['user_id' => $userId]);
+        $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $exception) {
+        echo "<p>Erreur lors de la récupération des groupes : " . htmlspecialchars($exception->getMessage()) . "</p>";
         return;
     }
     if (!$groups || count($groups) === 0) {
@@ -159,15 +159,15 @@ if (
     $groupName = trim($_POST['group_name']);
     $desc = isset($_POST['group_desc']) ? trim($_POST['group_desc']) : '';
     try {
-        $sth = $dbh->prepare("INSERT INTO sql_groups (nomgroupe, descriptiongroupe) VALUES (:nomgroupe, :descriptiongroupe)");
-        $sth->execute(['nomgroupe' => $groupName, 'descriptiongroupe' => $desc]);
-        $groupId = $dbh->lastInsertId();
+        $stmt = $database->prepare("INSERT INTO sql_groups (nomgroupe, descriptiongroupe) VALUES (:nomgroupe, :descriptiongroupe)");
+        $stmt->execute(['nomgroupe' => $groupName, 'descriptiongroupe' => $desc]);
+        $groupId = $database->lastInsertId();
         $userId = (int)$_SESSION['id'];
-        $sth2 = $dbh->prepare("INSERT INTO utilisateur_groups (user_id, group_id) VALUES (:user_id, :group_id)");
-        $sth2->execute(['user_id' => $userId, 'group_id' => $groupId]);
+        $stmt2 = $database->prepare("INSERT INTO utilisateur_groups (user_id, group_id) VALUES (:user_id, :group_id)");
+        $stmt2->execute(['user_id' => $userId, 'group_id' => $groupId]);
         echo '<div style="color:green;">Groupe créé et vous y êtes ajouté !</div>';
-    } catch (PDOException $e) {
-        echo '<div style="color:red;">Erreur lors de la création : '.htmlspecialchars($e->getMessage()).'</div>';
+    } catch (PDOException $exception) {
+        echo '<div style="color:red;">Erreur lors de la création : '.htmlspecialchars($exception->getMessage()).'</div>';
     }
 }
 

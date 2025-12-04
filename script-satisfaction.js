@@ -1,8 +1,6 @@
-// État de l'application satisfaction
 let surveys = JSON.parse(localStorage.getItem('surveys')) || [];
 let currentSurveyId = null;
 
-// Initialisation satisfaction
 document.addEventListener('DOMContentLoaded', function() {
     initializeSatisfactionEventListeners();
     updateDashboard();
@@ -10,16 +8,13 @@ document.addEventListener('DOMContentLoaded', function() {
     updateResults();
 });
 
-// Event Listeners satisfaction
 function initializeSatisfactionEventListeners() {
-    // Navigation des onglets
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             switchTab(this.dataset.tab);
         });
     });
 
-    // Form de création
     const surveyForm = document.getElementById('surveyForm');
     if (surveyForm) {
         surveyForm.addEventListener('submit', createSurvey);
@@ -30,14 +25,12 @@ function initializeSatisfactionEventListeners() {
         addQuestionBtn.addEventListener('click', addQuestionField);
     }
 
-    // Modal
     document.querySelectorAll('.close').forEach(close => {
         close.addEventListener('click', function() {
             this.closest('.modal').style.display = 'none';
         });
     });
 
-    // Fermeture modal au clic extérieur
     window.addEventListener('click', function(event) {
         const responseModal = document.getElementById('responseModal');
         const detailsModal = document.getElementById('detailsModal');
@@ -49,7 +42,6 @@ function initializeSatisfactionEventListeners() {
         }
     });
 
-    // Details tabs
     document.querySelectorAll('.details-tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             switchDetailsTab(this.dataset.detailsTab);
@@ -57,19 +49,15 @@ function initializeSatisfactionEventListeners() {
     });
 }
 
-// Changement d'onglet satisfaction
 function switchTab(tabName) {
-    // Masquer tous les onglets
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
 
-    // Retirer la classe active des boutons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
 
-    // Afficher l'onglet sélectionné
     const tabContent = document.getElementById(tabName);
     if (tabContent) {
         tabContent.classList.add('active');
@@ -80,7 +68,6 @@ function switchTab(tabName) {
         tabBtn.classList.add('active');
     }
 
-    // Mettre à jour les contenus
     if (tabName === 'surveys') {
         updateSurveysList();
     } else if (tabName === 'results') {
@@ -88,7 +75,6 @@ function switchTab(tabName) {
     }
 }
 
-// Ajouter un champ de question
 function addQuestionField() {
     const questionsList = document.getElementById('questionsList');
     const questionIndex = questionsList.children.length;
@@ -108,12 +94,10 @@ function addQuestionField() {
     questionsList.appendChild(questionItem);
 }
 
-// Supprimer une question
 function removeQuestion(btn) {
     btn.closest('.question-item').remove();
 }
 
-// Créer un questionnaire
 function createSurvey(e) {
     e.preventDefault();
 
@@ -145,7 +129,6 @@ function createSurvey(e) {
     surveys.push(survey);
     saveSurveys();
     
-    // Réinitialiser le formulaire
     document.getElementById('surveyForm').reset();
     document.getElementById('questionsList').innerHTML = '';
     
@@ -155,7 +138,6 @@ function createSurvey(e) {
     updateDashboard();
 }
 
-// Mettre à jour la liste des questionnaires
 function updateSurveysList() {
     const surveysList = document.getElementById('surveysList');
 
@@ -192,7 +174,6 @@ function updateSurveysList() {
     }).join('');
 }
 
-// Ouvrir modal pour répondre
 function openResponseModal(surveyId) {
     currentSurveyId = surveyId;
     const survey = surveys.find(s => s.id === surveyId);
@@ -232,7 +213,6 @@ function openResponseModal(surveyId) {
         }
     }).join('');
 
-    // Event listeners pour les boutons de notation
     document.querySelectorAll('.rating-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const questionId = this.dataset.questionId;
@@ -248,14 +228,12 @@ function openResponseModal(surveyId) {
     document.getElementById('responseModal').style.display = 'block';
 }
 
-// Soumettre une réponse
 function submitResponse(e) {
     e.preventDefault();
 
     const survey = surveys.find(s => s.id === currentSurveyId);
     const responses = {};
 
-    // Récupérer les réponses de notation
     document.querySelectorAll('.rating-btn.selected').forEach(btn => {
         responses[btn.dataset.questionId] = {
             type: 'rating',
@@ -263,7 +241,6 @@ function submitResponse(e) {
         };
     });
 
-    // Récupérer les réponses texte
     document.querySelectorAll('.response-text').forEach(input => {
         responses[input.dataset.questionId] = {
             type: 'text',
@@ -271,7 +248,6 @@ function submitResponse(e) {
         };
     });
 
-    // Récupérer les réponses textarea
     document.querySelectorAll('.response-textarea').forEach(textarea => {
         responses[textarea.dataset.questionId] = {
             type: 'textarea',
@@ -279,7 +255,6 @@ function submitResponse(e) {
         };
     });
 
-    // Vérifier que toutes les questions ont des réponses
     if (Object.keys(responses).length !== survey.questions.length) {
         alert('Veuillez répondre à toutes les questions');
         return;
@@ -299,12 +274,10 @@ function submitResponse(e) {
     alert('Réponses soumises avec succès!');
 }
 
-// Fermer modal de réponse
 function closeResponseModal() {
     document.getElementById('responseModal').style.display = 'none';
 }
 
-// Ouvrir modal détails
 function openDetailsModal(surveyId) {
     currentSurveyId = surveyId;
     const survey = surveys.find(s => s.id === surveyId);
@@ -313,7 +286,6 @@ function openDetailsModal(surveyId) {
 
     document.getElementById('detailsTitle').textContent = survey.title;
 
-    // Info tab
     const surveyDetails = document.getElementById('surveyDetails');
     surveyDetails.innerHTML = `
         <div style="margin-bottom: 20px;">
@@ -333,7 +305,6 @@ function openDetailsModal(surveyId) {
         </div>
     `;
 
-    // Responses tab
     const responsesList = document.getElementById('responsesList');
     if (survey.responses.length === 0) {
         responsesList.innerHTML = '<p class="empty-state">Aucune réponse pour le moment</p>';
@@ -351,7 +322,6 @@ function openDetailsModal(surveyId) {
         `).join('');
     }
 
-    // Boutons d'action
     document.getElementById('respondBtn').onclick = () => {
         closeDetailsModal();
         openResponseModal(surveyId);
@@ -369,7 +339,6 @@ function openDetailsModal(surveyId) {
         }
     };
 
-    // Changer d'onglet
     document.querySelectorAll('.details-tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -382,7 +351,6 @@ function openDetailsModal(surveyId) {
     document.getElementById('detailsModal').style.display = 'block';
 }
 
-// Changer d'onglet dans les détails
 function switchDetailsTab(tabName) {
     document.querySelectorAll('.details-tab-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -395,12 +363,10 @@ function switchDetailsTab(tabName) {
     document.getElementById(tabName).classList.add('active');
 }
 
-// Fermer modal détails
 function closeDetailsModal() {
     document.getElementById('detailsModal').style.display = 'none';
 }
 
-// Mettre à jour les résultats
 function updateResults() {
     const resultsList = document.getElementById('resultsList');
 
@@ -470,7 +436,6 @@ function updateResults() {
         .join('');
 }
 
-// Mettre à jour le tableau de bord
 function updateDashboard() {
     const totalResponses = surveys.reduce((sum, s) => sum + s.responses.length, 0);
     const ratingResponses = [];
@@ -499,7 +464,6 @@ function updateDashboard() {
     document.getElementById('satisfactionRate').textContent = satisfactionRate + '%';
 }
 
-// Calculer la moyenne d'un questionnaire
 function calculateSurveyAverage(survey) {
     const ratingQuestions = survey.questions.filter(q => q.type === 'rating');
 
@@ -526,7 +490,6 @@ function calculateSurveyAverage(survey) {
     return Math.round(average);
 }
 
-// Sauvegarder les questionnaires
 function saveSurveys() {
     localStorage.setItem('surveys', JSON.stringify(surveys));
 }

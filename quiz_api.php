@@ -1,26 +1,24 @@
 <?php
 session_start();
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $dbh = new PDO(
-        'mysql:host=localhost;dbname=quizzeo;charset=utf8',
+    $database = new PDO(
+        'mysql:host=localhost;dbname=quizzeo;charset=utf8mb4',
         'root',
         '',
         array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION)
     );
-} catch (PDOException $e) {
+} catch (PDOException $exception) {
     echo json_encode(['success' => false, 'error' => 'Erreur de connexion à la base de données']);
     exit;
 }
 
-// Récupérer l'action depuis GET, POST ou JSON body
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// Si l'action n'est pas trouvée, vérifier dans le corps JSON
 if (empty($action)) {
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
+    $jsonInput = file_get_contents('php://input');
+    $data = json_decode($jsonInput, true);
     if ($data && isset($data['action'])) {
         $action = $data['action'];
     }
@@ -28,26 +26,23 @@ if (empty($action)) {
 
 switch ($action) {
     case 'getAll':
-        // Récupérer tous les quizzes d'un groupe
         try {
-            $group_id = $_GET['group_id'] ?? 0;
+            $groupId = $_GET['group_id'] ?? 0;
             
-            if ($group_id > 0) {
-                $stmt = $dbh->prepare("SELECT * FROM sql_quizz WHERE group_id = ? ORDER BY id DESC");
-                $stmt->execute([$group_id]);
+            if ($groupId > 0) {
+                $stmt = $database->prepare("SELECT * FROM sql_quizz WHERE group_id = ? ORDER BY id DESC");
+                $stmt->execute([$groupId]);
             } else {
-                $stmt = $dbh->prepare("SELECT * FROM sql_quizz ORDER BY id DESC");
+                $stmt = $database->prepare("SELECT * FROM sql_quizz ORDER BY id DESC");
                 $stmt->execute();
             }
             $quizzes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Pour chaque quiz, récupérer ses questions
             foreach ($quizzes as &$quiz) {
-                $stmt = $dbh->prepare("SELECT * FROM sql_questions WHERE quizz_id = ? ORDER BY id");
+                $stmt = $database->prepare("SELECT * FROM sql_questions WHERE quizz_id = ? ORDER BY id");
                 $stmt->execute([$quiz['id']]);
                 $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Décoder les options JSON
                 foreach ($questions as &$question) {
                     $question['options'] = json_decode($question['options'], true);
                     $question['reponse'] = json_decode($question['reponse'], true);
@@ -57,14 +52,18 @@ switch ($action) {
             }
             
             echo json_encode(['success' => true, 'quizzes' => $quizzes]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (PDOException $exception) {
+            echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
         }
         break;
         
     case 'create':
-        // Créer un nouveau quiz
         try {
+            if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'entreprise' && $_SESSION['role'] !== 'ecole')) {
+                echo json_encode(['success' => false, 'error' => 'Vous n\'avez pas la permission de créer des quiz']);
+                exit;
+            }
+            
             $data = json_decode(file_get_contents('php://input'), true);
             
             if (!$data || !isset($data['nom']) || !isset($data['questions'])) {
@@ -72,31 +71,29 @@ switch ($action) {
                 exit;
             }
             
-            // Insérer le quiz
-            $stmt = $dbh->prepare("
+            $stmt = $database->prepare("
                 INSERT INTO sql_quizz (nom, theme, description, etatquizz, nbr_question, question_id, group_id) 
                 VALUES (?, ?, ?, ?, ?, 0, ?)
             ");
             
             $theme = $data['theme'] ?? $data['icon'] ?? '📝';
             $description = $data['description'] ?? '';
-            $etatquizz = 'actif';
-            $nbr_question = count($data['questions']);
-            $group_id = $data['group_id'] ?? 0;
+            $etatQuizz = 'actif';
+            $nombreQuestions = count($data['questions']);
+            $groupId = $data['group_id'] ?? 0;
             
             $stmt->execute([
                 $data['nom'],
                 $theme,
                 $description,
-                $etatquizz,
-                $nbr_question,
-                $group_id
+                $etatQuizz,
+                $nombreQuestions,
+                $groupId
             ]);
             
-            $quizId = $dbh->lastInsertId();
+            $quizId = $database->lastInsertId();
             
-            // Insérer les questions
-            $stmt = $dbh->prepare("
+            $stmt = $database->prepare("
                 INSERT INTO sql_questions (quizz_id, type, question, options, reponse) 
                 VALUES (?, ?, ?, ?, ?)
             ");
@@ -112,13 +109,12 @@ switch ($action) {
             }
             
             echo json_encode(['success' => true, 'quiz_id' => $quizId]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (PDOException $exception) {
+            echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
         }
         break;
         
     case 'delete':
-        // Supprimer un quiz
         try {
             $quizId = $_POST['quiz_id'] ?? $_GET['quiz_id'] ?? null;
             
@@ -127,22 +123,19 @@ switch ($action) {
                 exit;
             }
             
-            // Supprimer les questions associées
-            $stmt = $dbh->prepare("DELETE FROM sql_questions WHERE quizz_id = ?");
+            $stmt = $database->prepare("DELETE FROM sql_questions WHERE quizz_id = ?");
             $stmt->execute([$quizId]);
             
-            // Supprimer le quiz
-            $stmt = $dbh->prepare("DELETE FROM sql_quizz WHERE id = ?");
+            $stmt = $database->prepare("DELETE FROM sql_quizz WHERE id = ?");
             $stmt->execute([$quizId]);
             
             echo json_encode(['success' => true]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (PDOException $exception) {
+            echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
         }
         break;
         
     case 'getById':
-        // Récupérer un quiz spécifique
         try {
             $quizId = $_GET['quiz_id'] ?? null;
             
@@ -151,7 +144,7 @@ switch ($action) {
                 exit;
             }
             
-            $stmt = $dbh->prepare("SELECT * FROM sql_quizz WHERE id = ?");
+            $stmt = $database->prepare("SELECT * FROM sql_quizz WHERE id = ?");
             $stmt->execute([$quizId]);
             $quiz = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -160,8 +153,7 @@ switch ($action) {
                 exit;
             }
             
-            // Récupérer les questions
-            $stmt = $dbh->prepare("SELECT * FROM sql_questions WHERE quizz_id = ? ORDER BY id");
+            $stmt = $database->prepare("SELECT * FROM sql_questions WHERE quizz_id = ? ORDER BY id");
             $stmt->execute([$quizId]);
             $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
@@ -173,8 +165,8 @@ switch ($action) {
             $quiz['questions'] = $questions;
             
             echo json_encode(['success' => true, 'quiz' => $quiz]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (PDOException $exception) {
+            echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
         }
         break;
         
