@@ -13,6 +13,10 @@ try {
 session_set_cookie_params(10, "/", "", false, true);
 session_start();
 
+$nb1 = rand(1, 9);
+$nb2 = rand(1, 9);
+$_SESSION['captcha_answer'] = $nb1 + $nb2;
+
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
 
     $token = $_COOKIE['remember_token'];
@@ -31,7 +35,7 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     }
 }
 
-if (isset($_POST['register'])) {
+if (isset($_POST['register'])) {  
     if (!empty($_POST['username']) && !empty($_POST['password'])) {
         $sth = $dbh->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
         $sth->execute(['username' => $_POST['username']]);

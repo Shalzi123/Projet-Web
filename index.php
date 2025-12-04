@@ -26,10 +26,18 @@
                 <option value="entreprise">Entreprise</option>
                 <option value="ecole">École</option>
             </select>
-        </div>
- 
+<?php
+$captchavalue = rand(1000,9999);
+?>
+</div>
 
- 
+<div>
+        <label for=""><?php echo $captchavalue ?></label>
+        <input type="captcha" name="captcha">
+
+
+        </div>
+
         <input type="submit" value="Valider" name="register">
     </form>
 
