@@ -1,4 +1,7 @@
+<?php
+require 'form_incription_connect.php';
 
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,17 +29,12 @@
                 <option value="entreprise">Entreprise</option>
                 <option value="ecole">École</option>
             </select>
-<?php
-$captchavalue = rand(1000,9999);
-?>
-</div>
-
-<div>
-        <label for=""><?php echo $captchavalue ?></label>
-        <input type="captcha" name="captcha">
+            <label for="captcha_answer">
+                Captcha : combien font <?= $_SESSION['captcha_operation_display']; ?> ?
+            </label>
+            <input type="number" name="captcha_answer" required>
 
 
-        </div>
 
         <input type="submit" value="Valider" name="register">
     </form>

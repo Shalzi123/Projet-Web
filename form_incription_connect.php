@@ -13,9 +13,13 @@ try {
 session_set_cookie_params(10, "/", "", false, true);
 session_start();
 
-$nb1 = rand(1, 9);
-$nb2 = rand(1, 9);
-$_SESSION['captcha_answer'] = $nb1 + $nb2;
+
+if (!isset($_SESSION['captcha_operation_display'])) {
+    $nb1 = rand(1, 9);
+    $nb2 = rand(1, 9);
+    $_SESSION['captcha_result'] = $nb1 + $nb2;
+    $_SESSION['captcha_operation_display'] = "$nb1 + $nb2";
+}
 
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
 
@@ -35,7 +39,14 @@ if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     }
 }
 
-if (isset($_POST['register'])) {  
+function verify_captcha($answer) {
+    return isset($_SESSION['captcha_result']) && (int)$answer === $_SESSION['captcha_result'];
+}
+
+if (!isset($_POST['captcha_answer']) || !verify_captcha($_POST['captcha_answer'])) {
+    echo "<b>Captcha incorrect, réessayez.</b>";
+} else {
+    if (isset($_POST['register'])) {  
     if (!empty($_POST['username']) && !empty($_POST['password'])) {
         $sth = $dbh->prepare("SELECT COUNT(*) FROM sql_utilisateur WHERE username = :username");
         $sth->execute(['username' => $_POST['username']]);
@@ -51,11 +62,13 @@ if (isset($_POST['register'])) {
                 'role' => 'user'
             ]);
             echo "<b>Inscription validée</b>";
+            unset($_SESSION['captcha_result'], $_SESSION['captcha_operation_display']);
         }
     }
 }
+}
 
-if (isset($_POST['connect'])) {
+    if (isset($_POST['connect'])) {
     $stmt = $dbh->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
     $stmt->execute(['username' => $_POST['username']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -93,6 +106,7 @@ if (isset($_POST['connect'])) {
         echo "Identifiants incorrects";
     }
 }
+
 
 if (isset($_GET['logout'])) {
     if (isset($_SESSION['username'])) {
