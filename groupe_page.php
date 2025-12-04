@@ -761,6 +761,10 @@ $canCreateQuiz = isset($_SESSION['role']) && ($_SESSION['role'] === 'entreprise'
             }
         });
     </script>
+    <script>
+        const USER_ROLE = '<?php echo isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : 'utilisateur'; ?>';
+        console.log('User Role:', USER_ROLE);
+    </script>
     <script src="script-menu.js" defer></script>
     <script src="script-satisfaction.js" defer></script>
     <script src="script-navigation.js" defer></script>

@@ -952,7 +952,6 @@ header .subtitle {
     }
 }
 
-/* Styles pour le lecteur de quiz */
 .quiz-player {
     background: white;
     border-radius: 12px;
@@ -1068,7 +1067,6 @@ header .subtitle {
     padding: 12px 24px;
 }
 
-/* Styles pour les résultats */
 .quiz-results {
     background: white;
     border-radius: 12px;

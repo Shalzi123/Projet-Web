@@ -116,6 +116,11 @@ switch ($action) {
         
     case 'delete':
         try {
+            if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['entreprise', 'ecole', 'admin'])) {
+                echo json_encode(['success' => false, 'error' => 'Permissions insuffisantes']);
+                exit;
+            }
+            
             $quizId = $_POST['quiz_id'] ?? $_GET['quiz_id'] ?? null;
             
             if (!$quizId) {

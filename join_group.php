@@ -78,17 +78,17 @@ if (empty($token)) {
         
         <?php echo $message; ?>
         
-        <?php if ($group_info && !isset($_POST['join_group'])): ?>
+        <?php if ($groupInfo && !isset($_POST['join_group'])): ?>
             <?php
-            $stmt = $dbh->prepare("SELECT COUNT(*) FROM utilisateur_groups WHERE user_id = ? AND group_id = ?");
-            $stmt->execute([$_SESSION['id'], $group_info['group_id']]);
-            $already_member = $stmt->fetchColumn() > 0;
+            $stmt = $database->prepare("SELECT COUNT(*) FROM utilisateur_groups WHERE user_id = ? AND group_id = ?");
+            $stmt->execute([$_SESSION['id'], $groupInfo['group_id']]);
+            $alreadyMember = $stmt->fetchColumn() > 0;
             
-            if (!$already_member):
+            if (!$alreadyMember):
             ?>
             <div style="margin: 20px 0;">
-                <h2 style="color: #0056ab; margin-bottom: 10px;"><?php echo htmlspecialchars($group_info['nomgroupe']); ?></h2>
-                <p style="color: #666; margin-bottom: 20px;"><?php echo htmlspecialchars($group_info['descriptiongroupe']); ?></p>
+                <h2 style="color: #0056ab; margin-bottom: 10px;"><?php echo htmlspecialchars($groupInfo['nomgroupe']); ?></h2>
+                <p style="color: #666; margin-bottom: 20px;"><?php echo htmlspecialchars($groupInfo['descriptiongroupe']); ?></p>
                 
                 <form method="POST">
                     <input type="hidden" name="join_group" value="1">
@@ -97,7 +97,7 @@ if (empty($token)) {
             </div>
             <?php else: ?>
             <div style="margin: 20px 0;">
-                <a href="groupe_page.php?group_id=<?php echo $group_info['group_id']; ?>" class="submit_btn" style="text-decoration:none;display:inline-block;">
+                <a href="groupe_page.php?group_id=<?php echo $groupInfo['group_id']; ?>" class="submit_btn" style="text-decoration:none;display:inline-block;">
                     Aller au groupe
                 </a>
             </div>

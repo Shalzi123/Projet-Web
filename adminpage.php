@@ -244,7 +244,7 @@ if($_GET['action'] ?? false) {
                         th.textContent = header;
                         headerRow.appendChild(th);
                     });
-                    // Ajout d'une colonne Action si users ou groups
+                    
                     if(type === 'users' || type === 'groups') {
                         const th = document.createElement('th');
                         th.textContent = 'Action';
@@ -258,9 +258,8 @@ if($_GET['action'] ?? false) {
                             const td = document.createElement('td');
                             td.textContent = row[header] || '-';
                             tr.appendChild(td);
-                        });
-                        
-                        // Ajout du bouton Bannir pour les utilisateurs
+                        });     
+
                         if(type === 'users') {
                             const td = document.createElement('td');
                             const btn = document.createElement('button');
@@ -289,7 +288,6 @@ if($_GET['action'] ?? false) {
                                 .then(resp => resp.json())
                                 .then(resp => {
                                     if(resp.success) {
-                                        // Inverse l'état local et met à jour le bouton
                                         row['banned'] = row['banned'] == 1 ? 0 : 1;
                                         updateButton(row['banned'] == 1);
                                     }
@@ -299,7 +297,6 @@ if($_GET['action'] ?? false) {
                             tr.appendChild(td);
                         }
                         
-                        // Ajout du bouton Supprimer pour les groupes
                         if(type === 'groups') {
                             const td = document.createElement('td');
                             const btn = document.createElement('button');
@@ -321,7 +318,7 @@ if($_GET['action'] ?? false) {
                                     .then(resp => {
                                         if(resp.success) {
                                             alert('Groupe supprimé avec succès');
-                                            loadData('groups'); // Recharger la liste
+                                            loadData('groups');
                                         } else {
                                             alert('Erreur lors de la suppression: ' + (resp.error || 'Erreur inconnue'));
                                         }

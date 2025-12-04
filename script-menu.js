@@ -75,7 +75,11 @@ function renderQuizzes() {
         
         actions.appendChild(startBtn);
         actions.appendChild(resultsBtn);
-        actions.appendChild(deleteBtn);
+        
+        const isAdmin = typeof USER_ROLE !== 'undefined' && USER_ROLE && ['entreprise', 'ecole', 'admin'].includes(USER_ROLE);
+        if (isAdmin) {
+            actions.appendChild(deleteBtn);
+        }
         
         const resultsSection = document.createElement('div');
         resultsSection.id = `results-section-${quiz.id}`;

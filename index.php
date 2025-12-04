@@ -13,6 +13,26 @@ try {
 session_set_cookie_params(14400);
 session_start();
 
+if (!isset($_SESSION['captcha_operation_display']) || !isset($_SESSION['captcha_answer'])) {
+    $operand1 = rand(1, 10);
+    $operand2 = rand(1, 10);
+    $operator = rand(0, 2);
+    
+    if ($operator === 0) {
+        $operation = $operand1 + $operand2;
+        $operationDisplay = "$operand1 + $operand2";
+    } elseif ($operator === 1) {
+        $operation = $operand1 - $operand2;
+        $operationDisplay = "$operand1 - $operand2";
+    } else {
+        $operation = $operand1 * $operand2;
+        $operationDisplay = "$operand1 × $operand2";
+    }
+    
+    $_SESSION['captcha_operation_display'] = $operationDisplay;
+    $_SESSION['captcha_answer'] = $operation;
+}
+
 if (!isset($_SESSION['username']) && isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
     $stmt = $database->prepare("SELECT * FROM sql_utilisateur WHERE remember_token IS NOT NULL");
@@ -59,46 +79,69 @@ if (isset($_POST['register'])) {
 }
 
 if (isset($_POST['connect'])) {
-    $stmt = $database->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
-    $stmt->execute(['username' => $_POST['username']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($user && password_verify($_POST['password'], $user['password'])) {
-        if (isset($user['banned']) && $user['banned'] == 1) {
-            $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Votre compte a été banni. Connexion impossible.</div>';
+    if (!isset($_POST['captcha_answer']) || (int)$_POST['captcha_answer'] !== $_SESSION['captcha_answer']) {
+        $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Captcha incorrect</div>';
+        $operand1 = rand(1, 10);
+        $operand2 = rand(1, 10);
+        $operator = rand(0, 2);
+        
+        if ($operator === 0) {
+            $operation = $operand1 + $operand2;
+            $operationDisplay = "$operand1 + $operand2";
+        } elseif ($operator === 1) {
+            $operation = $operand1 - $operand2;
+            $operationDisplay = "$operand1 - $operand2";
         } else {
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
-            if (isset($user['id'])) {
-                $_SESSION['id'] = (int)$user['id'];
-            }
-            if (!empty($_POST['remember'])) {
-                $rememberToken = bin2hex(random_bytes(32));
-                $stmt = $database->prepare("UPDATE sql_utilisateur SET remember_token = :token WHERE username = :username");
-                $stmt->execute([
-                    'token' => password_hash($rememberToken, PASSWORD_DEFAULT),
-                    'username' => $user['username']
-                ]);
-                setcookie(
-                    "remember_token",
-                    $rememberToken,
-                    time() + (60 * 60 * 24 * 30),
-                    "/",
-                    "",
-                    false,
-                    true
-                );
-            }
-            if ($user['role'] === 'admin') {
-                header("Location: adminpage.php");
-                exit;
-            } else {
-                header("Location: groupes.php");
-                exit;
-            }
+            $operation = $operand1 * $operand2;
+            $operationDisplay = "$operand1 × $operand2";
         }
+        
+        $_SESSION['captcha_operation_display'] = $operationDisplay;
+        $_SESSION['captcha_answer'] = $operation;
     } else {
-        $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Identifiants incorrects</div>';
+        $stmt = $database->prepare("SELECT * FROM sql_utilisateur WHERE username = :username");
+        $stmt->execute(['username' => $_POST['username']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($_POST['password'], $user['password'])) {
+            if (isset($user['banned']) && $user['banned'] == 1) {
+                $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Votre compte a été banni. Connexion impossible.</div>';
+            } else {
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+                if (isset($user['id'])) {
+                    $_SESSION['id'] = (int)$user['id'];
+                }
+                if (!empty($_POST['remember'])) {
+                    $rememberToken = bin2hex(random_bytes(32));
+                    $stmt = $database->prepare("UPDATE sql_utilisateur SET remember_token = :token WHERE username = :username");
+                    $stmt->execute([
+                        'token' => password_hash($rememberToken, PASSWORD_DEFAULT),
+                        'username' => $user['username']
+                    ]);
+                    setcookie(
+                        "remember_token",
+                        $rememberToken,
+                        time() + (60 * 60 * 24 * 30),
+                        "/",
+                        "",
+                        false,
+                        true
+                    );
+                }
+                if ($user['role'] === 'admin') {
+                    header("Location: adminpage.php");
+                    exit;
+                } else {
+                    header("Location: groupes.php");
+                    exit;
+                }
+            }
+        } else {
+            $message = '<div style="color:red;font-weight:bold;margin:10px 0;">Identifiants incorrects</div>';
+        }
+        $_SESSION['captcha_answer'] = null;
+        $_SESSION['captcha_operation_display'] = null;
     }
 }
 
@@ -127,6 +170,12 @@ if (isset($_POST['connect'])) {
         <div>
             <label for="">Mot de passe</label>
             <input type="password" name="password" required>
+        </div>
+        <div>
+            <label for="captcha_answer">
+                Captcha : combien font <?= $_SESSION['captcha_operation_display']; ?> ?
+            </label>
+            <input type="number" name="captcha_answer" required>
         </div>
         <input class="submit_btn" type="submit" value="Valider" name="connect">
     </form>
