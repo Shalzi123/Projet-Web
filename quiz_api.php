@@ -1,4 +1,9 @@
 <?php
+ini_set('post_max_size', '50M');
+ini_set('upload_max_filesize', '50M');
+ini_set('max_input_vars', '5000');
+ini_set('memory_limit', '256M');
+
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 

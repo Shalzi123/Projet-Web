@@ -830,9 +830,17 @@ async function createQuiz(event) {
     const icon = document.getElementById('quiz-icon').value;
 
     const questionElements = document.querySelectorAll('.question-block');
+    
+    if (questionElements.length === 0) {
+        alert('Veuillez ajouter au moins une question.');
+        return;
+    }
+    
     const questions = [];
+    let validationError = false;
 
-    questionElements.forEach((questionElement, idx) => {
+    for (let idx = 0; idx < questionElements.length; idx++) {
+        const questionElement = questionElements[idx];
         const text = questionElement.querySelector('.question-text').value;
         const type = questionElement.querySelector('.question-type').value;
         const optionsInputs = questionElement.querySelectorAll('.option-text');
@@ -841,9 +849,22 @@ async function createQuiz(event) {
         const options = Array.from(optionsInputs).map(input => input.value);
         const answer = Array.from(answers).map(checkbox => parseInt(checkbox.getAttribute('data-index')));
 
-        if (!text || options.some(option => !option) || answer.length === 0) {
-            alert('Veuillez remplir toutes les options et cocher au moins une réponse correcte pour chaque question.');
-            return;
+        if (!text || !text.trim()) {
+            alert(`Question ${idx + 1} : Le texte de la question est vide.`);
+            validationError = true;
+            break;
+        }
+
+        if (options.some(option => !option || !option.trim())) {
+            alert(`Question ${idx + 1} : Toutes les options doivent être remplies.`);
+            validationError = true;
+            break;
+        }
+
+        if (answer.length === 0) {
+            alert(`Question ${idx + 1} : Veuillez cocher au moins une réponse correcte.`);
+            validationError = true;
+            break;
         }
 
         questions.push({
@@ -853,9 +874,9 @@ async function createQuiz(event) {
             options,
             answer
         });
-    });
+    }
 
-    if (questions.length === 0) return;
+    if (validationError || questions.length === 0) return;
 
     const groupId = typeof CURRENT_GROUP_ID !== 'undefined' ? CURRENT_GROUP_ID : 0;
 
@@ -891,11 +912,12 @@ async function createQuiz(event) {
             
             alert(`Quizz "${title}" créé avec succès !`);
         } else {
-            alert('Erreur lors de la création: ' + data.error);
+            console.error('Erreur API:', data);
+            alert('Erreur lors de la création: ' + (data.error || 'Erreur inconnue'));
         }
     } catch (error) {
         console.error('Erreur réseau:', error);
-        alert('Erreur de connexion');
+        alert('Erreur de connexion au serveur. Vérifiez la console pour plus de détails.');
     }
 }
 

@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['creer_groupe']) && !e
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes groupes</title>
+    <link rel="icon" type="image/vnd.icon" href="images/quiz_logo.ico">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
 </head>
 <body>

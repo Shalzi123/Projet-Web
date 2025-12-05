@@ -53,12 +53,20 @@ $canCreateQuiz = isset($_SESSION['role']) && ($_SESSION['role'] === 'entreprise'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($groupe['nomgroupe']); ?> - Centre QCM & Satisfaction</title>
+    <link rel="icon" type="image/vnd.icon" href="images/quiz_logo.ico">
     <link rel="stylesheet" href="style.css">
     <style>
+        html, body {
+            overflow-y: auto !important;
+            height: auto !important;
+            scroll-behavior: smooth;
+        }
+        
         .quiz-container {
             max-width: 1200px;
             margin: 90px auto 20px;
             padding: 20px;
+            position: relative;
         }
         
         .quiz-header-section {
@@ -187,8 +195,9 @@ $canCreateQuiz = isset($_SESSION['role']) && ($_SESSION['role'] === 'entreprise'
             border-radius: 12px;
             padding: 30px;
             max-width: 800px;
-            margin: 0 auto;
+            margin: 0 auto 40px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
         
         .quiz-header {
