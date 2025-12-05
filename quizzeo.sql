@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le : jeu. 04 déc. 2025 à 23:08
+-- Généré le : ven. 05 déc. 2025 à 00:17
 -- Version du serveur : 9.1.0
 -- Version de PHP : 8.3.14
 
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `sql_questions` (
   `options` varchar(255) NOT NULL,
   `reponse` varchar(300) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `sql_questions`
@@ -96,7 +96,11 @@ INSERT INTO `sql_questions` (`id`, `quizz_id`, `type`, `question`, `options`, `r
 (8, 8, 'single', 'Quel est le meilleur jeu ?', '[\"Fifa\",\"Outer Wilds\",\"Roblox\"]', '[1]'),
 (9, 8, 'single', 'Comment s\'appelle le célèbre plombier rouge ?', '[\"G\\u00e9rome\",\"Spaghettis bolognaise carbonara pizza\",\"Mario\",\"Augustin\"]', '[2]'),
 (10, 8, 'multiple', 'Quels personnages existent dans COD Black Ops 2 ?', '[\"Riz-au-lait (tr\\u00e8s m\\u00e9chant)\",\"David Mason\",\"Raoul Menendez\",\"Jim petits pieds\",\"Olivier Amar\"]', '[1,2]'),
-(11, 8, 'single', 'Bonus : Qui est le plus cool ?', '[\"Romain CROS\",\"Sacha RIBOLZI\",\"Olivier AMAR\",\"Lo\\u00efs LEBLOND\",\"Samuel Processeur\"]', '[4]');
+(11, 8, 'single', 'Bonus : Qui est le plus cool ?', '[\"Romain CROS\",\"Sacha RIBOLZI\",\"Olivier AMAR\",\"Lo\\u00efs LEBLOND\",\"Samuel Processeur\"]', '[4]'),
+(12, 9, 'single', 'Qui a démarré la seconde guerre mondiale ?', '[\"Passe-partout\",\"Dark Vador\",\"Donatien\",\"Un Fiat Multipla\"]', '[2]'),
+(13, 9, 'single', 'Comment régler la famine dans le monde ?', '[\"Un poulet bascaise\",\"Un sketch de Kev Adams\",\"L\'argent stratosph\\u00e9rique d\'Olivier Amar\",\"Des chocolats kinder\"]', '[2]'),
+(14, 9, 'multiple', 'Les phrases les plus connues de Paul Mirabelle ?', '[\"\\\"Un donut sucr\\u00e9 au sucre\\\"\",\"\\\"Salam les rohyas\\\"\",\"\\\"C\'est ciao\\\"\",\"\\\"Ils ont fum\\u00e9 les devs ou quoi !??\\\"\",\"\\\"Du coup je n\'ai plus de porte-feuille\\\"\"]', '[1,4]'),
+(15, 9, 'single', 'Quel est le meilleur agent secret ?', '[\"Perry l\'ornithorynque\",\"R\\u00e9mi\",\"Gustave\",\"Lilian\"]', '[0]');
 
 -- --------------------------------------------------------
 
@@ -115,14 +119,15 @@ CREATE TABLE IF NOT EXISTS `sql_quizz` (
   `question_id` int NOT NULL,
   `group_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `sql_quizz`
 --
 
 INSERT INTO `sql_quizz` (`id`, `nom`, `theme`, `description`, `etatquizz`, `nbr_question`, `question_id`, `group_id`) VALUES
-(8, 'Culture JV', '🎮', 'Testez votre culture JV', 'actif', 4, 0, 22);
+(8, 'Culture JV', '🎮', 'Testez votre culture JV', 'actif', 4, 0, 22),
+(9, 'Culture G', '🌏', 'Testez votre culture G', 'actif', 4, 0, 22);
 
 -- --------------------------------------------------------
 
@@ -162,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `sql_utilisateur` (
 --
 
 INSERT INTO `sql_utilisateur` (`id`, `username`, `password`, `role`, `banned`, `remember_token`, `id_groups`) VALUES
-(12, 'sigmaphonk', '$2y$10$LvmU6UA6urxMpMuBKFUhieAgnkYY7xgh66XNwsZOPtKwwVgYOs/YO', 'entreprise', 1, NULL, 0),
+(12, 'sigmaphonk', '$2y$10$LvmU6UA6urxMpMuBKFUhieAgnkYY7xgh66XNwsZOPtKwwVgYOs/YO', 'utilisateur', 1, NULL, 0),
 (24, 'John Pork', '$2y$10$6T2Sq3wZjIByHabLTcuMEex1m0TQ35OxKsHQ0EyBQF2Cfr4remNAS', 'utilisateur', 0, NULL, 0),
 (25, 'admin', '$2y$10$1WotN.Q4p9.l0M5hK.x7r.x9BVTqdiR9gqIYrCWsx7i2Hpf1B6rW2', 'admin', 0, NULL, 0),
 (26, 'Angoulime', '$2y$10$X.9llT1KKSvMY3MbCXVDKOsMaUreWyWHQVaNRCeNNgoHi7kAqBXGi', 'entreprise', 0, NULL, 0);
